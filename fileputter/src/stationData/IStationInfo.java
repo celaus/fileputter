@@ -1,7 +1,7 @@
 /**
  * @author  Claus Matzinger
- * @date    Jun 01, 2010
- * @file    Handler
+ * @date    Jun 13, 2010
+ * @file    IStationInfo
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -21,19 +21,17 @@
  */
 
 
-package at.clma.fileputter.broadcastListener;
+package at.clma.fileputter.stationData;
+
+import java.net.InetAddress;
 
 /**
  *
- * 
+ * @author Claus Matzinger
  */
-class Handler {
-
-    public Handler() {
-    }
-    
-    void post(Runnable backPoster) {
-        new Thread(backPoster);
-    }
+public interface IStationInfo {
+    public void setStationAddress(InetAddress stationAddress);
+    public InetAddress getStationAddress();
+    public String getNetworkString();
 
 }
