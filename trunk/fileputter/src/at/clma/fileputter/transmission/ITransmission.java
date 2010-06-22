@@ -1,7 +1,7 @@
 /**
  * @author  Claus Matzinger
- * @date    Jun 13, 2010
- * @file    IStationInfo
+ * @date    Jun 15, 2010
+ * @file    ITransmission
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -20,19 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-package at.clma.fileputter.stationData;
-
-import java.net.InetAddress;
+package at.clma.fileputter.transmission;
 
 /**
  *
  * @author Claus Matzinger
  */
-public interface IStationInfo {
-    public void setStationAddress(InetAddress stationAddress);
-    public InetAddress getStationAddress();
-    public String getStationName();
-    public String getNetworkString();
+public interface ITransmission {
 
 }

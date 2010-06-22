@@ -1,7 +1,7 @@
 /**
  * @author  Claus Matzinger
- * @date    Jun 13, 2010
- * @file    IStationInfo
+ * @date    Jun 15, 2010
+ * @file    IStationList
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -19,20 +19,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package at.clma.fileputter.fileputterGUI;
 
-
-package at.clma.fileputter.stationData;
-
-import java.net.InetAddress;
+import at.clma.fileputter.stationData.IStationInfo;
+import java.util.List;
+import javax.swing.ListModel;
 
 /**
  *
  * @author Claus Matzinger
  */
-public interface IStationInfo {
-    public void setStationAddress(InetAddress stationAddress);
-    public InetAddress getStationAddress();
-    public String getStationName();
-    public String getNetworkString();
+public interface IStationList extends ListModel {
 
+    /**
+     * Adds a station.
+     * @param station The station.
+     */
+    public void addStation(IStationInfo station);
+
+    /**
+     * Removes a station.
+     * @param station The station.
+     */
+    public void removeStation(IStationInfo station);
+
+    /**
+     * Removes a station by its index.
+     * @param index The index.
+     */
+    public void removeStation(int index);
+
+    /**
+     * Gets all known stations in a list.
+     * @return A list of known stations.
+     */
+    public List<IStationInfo> getStations();
 }

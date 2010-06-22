@@ -41,7 +41,7 @@ import javax.swing.JPanel;
 public class StationEntry extends JPanel {
 
     private static final int SPACER = 10;
-    private IStationInfo holdingObject;
+    private IStationInfo binding;
     private boolean selected;
     private static Color backgroundIdle = Color.WHITE;
     private static Color backgroundHover = Color.LIGHT_GRAY;
@@ -50,7 +50,7 @@ public class StationEntry extends JPanel {
     private static Color foregroundIdle = Color.BLACK;
 
     public StationEntry(StationInfo s) {
-        holdingObject = s;
+        binding = s;
         setLayout(new GridLayout(2, 1));
         JLabel name = new JLabel(s.getStationName());
         Font fontStyleBold = new Font(name.getFont().getName(), Font.BOLD, name.getFont().getSize());
@@ -87,10 +87,7 @@ public class StationEntry extends JPanel {
                 unHover();
             }
         });
-
-
         setPreferredSize(new Dimension(name.getHeight() + ip.getHeight() + SPACER * 3, this.getWidth() + SPACER * 2));
-
     }
 
     private void select() {

@@ -54,11 +54,11 @@ public class StationInfoFactory {
                 // current token count for error handling
                 tokenCount++;
 
-                if (tmpStr.equals("name") && nameCnt == 0) {
+                if (tmpStr.equals(StationInfo.NAMEPREFIX) && nameCnt == 0) {
                     tok = Token.NAME;
-                } else if (tmpStr.equals("responseid") && respCnt == 0) {
+                } else if (tmpStr.equals(StationInfo.RESPONSEPREFIX) && respCnt == 0) {
                     tok = Token.RESPONSEID;
-                } else if (tmpStr.equals("id") && idCnt == 0) {
+                } else if (tmpStr.equals(StationInfo.IDPREFIX) && idCnt == 0) {
                     tok = Token.ID;
                 } else {
                     throw new ParseException(s, tokenCount);

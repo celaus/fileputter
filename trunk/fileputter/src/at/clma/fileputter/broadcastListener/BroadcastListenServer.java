@@ -22,6 +22,7 @@
 
 package at.clma.fileputter.broadcastListener;
 
+import at.clma.fileputter.fileputterGUI.MainWindow;
 import at.clma.fileputter.fileputterGUI.StationList;
 import at.clma.fileputter.stationData.IStationInfo;
 import at.clma.fileputter.stationData.StationInfo;
@@ -66,9 +67,9 @@ public class BroadcastListenServer implements Runnable {
                 result.setStationAddress(packet.getAddress());
                 messageHandler.post(backPoster);
             } catch (IOException e) {
-                StationList.error("Mover.NET", e.getMessage());
+                MainWindow.error("Mover.NET", e.getMessage());
             } catch (ParseException e) {
-                StationList.error("Mover.NET", e.getMessage()
+                MainWindow.error("Mover.NET", e.getMessage()
                         + " at token " + e.getErrorOffset());
             }
         }
