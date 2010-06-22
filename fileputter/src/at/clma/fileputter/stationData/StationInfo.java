@@ -23,11 +23,13 @@
 package at.clma.fileputter.stationData;
 
 import java.net.InetAddress;
-import java.text.ParseException;
 import java.util.Random;
-import java.util.StringTokenizer;
 
 public class StationInfo implements IStationInfo {
+
+    protected static final String NAMEPREFIX = "_name";
+    protected static final String RESPONSEPREFIX = "_responseid";
+    protected static final String IDPREFIX = "_id";
 
     private int id;
     private String stationName;
@@ -79,9 +81,9 @@ public class StationInfo implements IStationInfo {
 
     public String getNetworkString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("name=" + stationName + ";");
-        sb.append("responseid=" + responseId + ";");
-        sb.append("id=" + id);
+        sb.append(NAMEPREFIX + "=" + stationName + ";");
+        sb.append(RESPONSEPREFIX + "=" + responseId + ";");
+        sb.append(IDPREFIX + "=" + id);
         return sb.toString();
     }
 

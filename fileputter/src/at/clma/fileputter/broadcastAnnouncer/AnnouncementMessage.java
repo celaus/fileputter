@@ -31,7 +31,7 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 
 
-public class AnnouncementMessage {
+public class AnnouncementMessage implements IAnnouncement{
 
     private int port;
     private InetAddress interfAddress;

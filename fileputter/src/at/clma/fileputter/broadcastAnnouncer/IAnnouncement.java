@@ -1,7 +1,7 @@
 /**
  * @author  Claus Matzinger
- * @date    Jun 13, 2010
- * @file    IStationInfo
+ * @date    Jun 15, 2010
+ * @file    IAnnouncement
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -21,18 +21,13 @@
  */
 
 
-package at.clma.fileputter.stationData;
-
-import java.net.InetAddress;
+package at.clma.fileputter.broadcastAnnouncer;
 
 /**
  *
  * @author Claus Matzinger
  */
-public interface IStationInfo {
-    public void setStationAddress(InetAddress stationAddress);
-    public InetAddress getStationAddress();
-    public String getStationName();
-    public String getNetworkString();
+public interface IAnnouncement {
+   // public int send() throws IOException;
 
 }

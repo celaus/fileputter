@@ -19,81 +19,127 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package at.clma.fileputter.fileputterGUI;
 
-import at.clma.fileputter.attributes.ApplicationData;
-import at.clma.fileputter.stationData.StationInfo;
+import at.clma.fileputter.stationData.IStationInfo;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.AbstractListModel;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
 
 /**
  *
- * 
+ * @author Claus Matzinger
  */
-public class StationList extends JFrame {
+public class StationList extends AbstractListModel implements IStationList, ListCellRenderer {
 
-    private static final int WINDOW_WIDTH = 200;
-    private static final int WINDOW_HEIGHT = 400;
-    private static final Color WINDOW_BACKGROUND = Color.WHITE;
-    private static final int MAX_ROWS = 10;
-    private static final int MAX_COLS = 1;
+    private static Color backgroundIdle = Color.WHITE;
+    private static Color backgroundHover = Color.LIGHT_GRAY;
+    private static Color backgroundSelected = Color.DARK_GRAY;
+    private static Color foregroundSelected = Color.WHITE;
+    private static Color foregroundIdle = Color.BLACK;
+    private List<IStationInfo> stations;
 
     public StationList() {
-        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLayout(new GridLayout(MAX_ROWS, MAX_COLS));
-        getContentPane().setBackground(WINDOW_BACKGROUND);
-        setJMenuBar(createMenuBar());
-        setTitle(ApplicationData.NAME
-                + " v" + ApplicationData.VERSION);
-
-        add(new StationEntry(new StationInfo()));
+        stations = new ArrayList<IStationInfo>();
     }
 
-    private JMenuBar createMenuBar() {
-        JMenuBar mainMenu = new JMenuBar();
+    public void addStation(IStationInfo station) {
+        this.stations.add(station);
+        fireIntervalAdded(this, stations.indexOf(station), stations.indexOf(station));
+    }
 
-        JMenu mover = new JMenu(ApplicationData.NAME);
-        JMenu help = new JMenu("Help");
+    public List<IStationInfo> getStations() {
+        return stations;
+    }
 
-        JMenuItem exit = new JMenuItem("Exit");
-        exit.addActionListener(new ActionListener() {
+    public int getSize() {
+        return stations.size();
+    }
 
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
+    public Object getElementAt(int index) {
+        return (Object) stations.get(index);
+    }
+
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        StationEntry renderer = null;
+        if (value instanceof IStationInfo) {
+            renderer = new StationEntry((IStationInfo) value);
+            renderer.setSelected(isSelected);
+        }
+
+        return renderer;
+    }
+
+    public void removeStation(IStationInfo station) {
+        int index = stations.indexOf(station);
+        stations.remove(station);
+        fireIntervalRemoved(this, index, index);
+    }
+
+    public void removeStation(int index) {
+        stations.remove(index);
+        fireIntervalRemoved(this, index, index);
+    }
+
+    private class StationEntry extends JPanel {
+
+        private static final int SPACER = 20;
+        private static final int ITEM_WIDTH = 150;
+
+        @Override
+        public void paint(Graphics g) {
+            super.paint(g);
+            g.setColor(Color.GRAY);
+            int h = getHeight() - 1;
+            int w = getWidth();
+            GradientPaint gradient = new GradientPaint(0, h, backgroundHover, w, h, backgroundIdle);
+            ((Graphics2D) g).setPaint(gradient);
+            g.drawLine(0, h, w, h);
+        }
+
+        public StationEntry(IStationInfo s) {           
+            setLayout(new GridLayout(2, 1));
+            setBackground(backgroundIdle);
+            
+            // name
+            JLabel name = new JLabel(s.getStationName());
+            Font fontStyleBold = new Font(name.getFont().getName(), Font.BOLD, name.getFont().getSize());
+            name.setFont(fontStyleBold);
+            add(name);
+
+            // ip
+            JLabel ip = new JLabel(s.getStationAddress().getHostAddress());
+            Font fontStyleItalic = new Font(ip.getFont().getName(), Font.ITALIC, ip.getFont().getSize());
+            ip.setFont(fontStyleItalic);
+            add(ip);
+
+            setPreferredSize(new Dimension(ITEM_WIDTH, name.getHeight() + ip.getHeight() + 1 + SPACER * 2));
+        }
+
+        private void setSelected(boolean selected) {
+            if (selected) {
+                this.setBackground(backgroundSelected);
+                for (Component c : this.getComponents()) {
+                    c.setForeground(foregroundSelected);
+                }
+            } else {
+                this.setBackground(backgroundIdle);
+                for (Component c : this.getComponents()) {
+                    c.setForeground(foregroundIdle);
+                }
             }
-        });
-
-        JMenuItem about = new JMenuItem("About");
-        about.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                AboutBox aboutb = new AboutBox();
-                aboutb.setVisible(true);
-            }
-        });
-
-        mover.add(exit);
-        help.add(about);
-
-        mainMenu.add(mover);
-        mainMenu.add(help);
-        return mainMenu;
-    }
-
-    public static void main(String[] args) {
-        new StationList().setVisible(true);
-        return;
-    }
-
-    public static void error(String tag, String msg) {
-        System.err.println(tag + " Error:" + msg);
+        }
     }
 }
