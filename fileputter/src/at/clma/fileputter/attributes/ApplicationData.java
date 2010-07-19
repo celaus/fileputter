@@ -77,6 +77,10 @@ public class ApplicationData {
             + "GNU General Public License for more details. "
             + "You should have received a copy of the GNU General Public License "
             + "along with this program.  If not, see <http://www.gnu.org/licenses/>. ";
+    /**
+     * The port, fileputter listens on.
+     */
+    public static final int PORT = 9999;
     // ----------
     // PREFERENCES Nodenames
     // ----------
@@ -92,4 +96,32 @@ public class ApplicationData {
      * Name of the station-node for saving.
      */
     public static final String OPT_STATIONNAME = "stationName";
+    /**
+     * Clear to send code.
+     */
+    public static final String CO_CTS = "cts";
+    /**
+     * End of transmission code.
+     */
+    public static final String CO_EOT = "eot";
+    /**
+     * Verbosity state of the application
+     */
+    private static boolean verbose = false;
+
+    /**
+     * Gets the verbosity state.
+     * @return Verbosity state.
+     */
+    public static boolean isVerbose() {
+        return verbose;
+    }
+
+    /**
+     * Sets the verbosity state.
+     * @param v The verbosity state.
+     */
+    public static void setVerbose(boolean v) {
+        verbose = v;
+    }
 }
