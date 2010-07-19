@@ -19,20 +19,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-
 package at.clma.fileputter.stationData;
 
+import at.clma.fileputter.transmission.ITransfer;
 import java.net.InetAddress;
+import java.util.List;
 
 /**
  *
  * @author Claus Matzinger
  */
 public interface IStationInfo {
+
     public void setStationAddress(InetAddress stationAddress);
+
     public InetAddress getStationAddress();
+
     public String getStationName();
+
     public String getNetworkString();
 
+    public void add(ITransfer transfers);
+
+    public ITransfer remove(ITransfer transfers);
+
+    public List<ITransfer> getTransmissions();
 }

@@ -22,6 +22,7 @@
 package at.clma.fileputter.fileputterGUI;
 
 import at.clma.fileputter.stationData.IStationInfo;
+import java.net.InetAddress;
 import java.util.List;
 import javax.swing.ListModel;
 
@@ -54,4 +55,17 @@ public interface IStationList extends ListModel {
      * @return A list of known stations.
      */
     public List<IStationInfo> getStations();
+
+    /**
+     * Gets a station equal to the argument.
+     * @return The station Object or null if not found.
+     */
+    public IStationInfo find(IStationInfo station);
+
+    /**
+     * Gets a station for the passed address (if known).
+     * @param address The Address to be found.
+     * @return The station or null if not found.
+     */
+    public IStationInfo getForAddress(InetAddress address);
 }

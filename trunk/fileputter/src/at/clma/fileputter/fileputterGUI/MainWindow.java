@@ -22,23 +22,39 @@
 package at.clma.fileputter.fileputterGUI;
 
 import at.clma.fileputter.attributes.ApplicationData;
+import at.clma.fileputter.events.TransferEvent;
+import at.clma.fileputter.transmission.ITransfer;
+import at.clma.fileputter.listener.INetworkListener;
+import at.clma.fileputter.listener.TCPTransmissionServer;
+import at.clma.fileputter.events.IStationEventListener;
+import at.clma.fileputter.events.ITransferEventListener;
+import at.clma.fileputter.events.StationEvent;
+import at.clma.fileputter.stationData.IStationInfo;
+import at.clma.fileputter.transmission.DefaultInitializer;
+import at.clma.fileputter.transmission.FileDownload;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.io.IOException;
+import java.lang.Thread;
 import java.util.prefs.Preferences;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 
 /**
  *
  * @author Claus Matzinger
  */
-public class MainWindow extends JFrame {
+public class MainWindow extends JFrame implements IStationEventListener, ITransferEventListener {
 
     private static final int WINDOW_WIDTH = 200;
     private static final int WINDOW_HEIGHT = 400;
@@ -46,6 +62,8 @@ public class MainWindow extends JFrame {
     // Data
     private IStationList stations;
     private JList stationList;
+    // Services
+    private INetworkListener tcpServer;
 
     public MainWindow() {
         setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -65,8 +83,42 @@ public class MainWindow extends JFrame {
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         add(scrollPane);
+
+
+        stationList.addMouseListener(new MouseListener() {
+
+            public void mouseClicked(MouseEvent e) {
+                if (stationList.getSelectedValue() != null) {
+                    JFileChooser fc = new JFileChooser();
+                    if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                        ITransfer ul = new DefaultInitializer().createUpload(
+                                (IStationInfo) stationList.getSelectedValue(),
+                                fc.getSelectedFile());
+                        System.out.println("Starting upload");
+                        new Thread(ul).start();
+                    }
+                }
+
+            }
+
+            public void mousePressed(MouseEvent e) {
+            }
+
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            public void mouseExited(MouseEvent e) {
+            }
+        });
+
         if (Preferences.userNodeForPackage(ApplicationData.class).getBoolean(ApplicationData.OPT_AUTOANNOUNCE, true)) {
         }
+
+
+        startServices();
     }
 
     private JMenuBar createMenuBar() {
@@ -126,10 +178,60 @@ public class MainWindow extends JFrame {
     }
 
     public static void main(String[] args) {
+        for(int i = 0; i < args.length; i++){
+            if(args[i].equals("-v")) {
+                ApplicationData.setVerbose(true);
+            }
+        }
         new MainWindow().setVisible(true);
     }
 
     public static void error(String tag, String msg) {
         System.err.println(tag + " Error:" + msg);
+    }
+
+    private void startServices() {
+        try {
+            tcpServer = new TCPTransmissionServer(ApplicationData.PORT);
+            tcpServer.addTransmissionListener(this);
+            new Thread(tcpServer).start();
+        } catch (IOException ex) {
+            System.err.println("IO Exception");
+        }
+    }
+
+    public void onStationFound(StationEvent evt) {
+        // nothing yet
+    }
+
+    public void onIncomingTransmission(StationEvent evt, ITransfer transfer) {
+    }
+
+    public void onIncomingTransfer(TransferEvent evt) {
+        if (JOptionPane.showConfirmDialog(this, "Allow incoming transmission?",
+                "Allow?", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            JFileChooser filechooser = new JFileChooser();
+            filechooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            filechooser.showSaveDialog(this);
+
+            FileDownload dl = new FileDownload(evt.getTransmission(), filechooser.getSelectedFile());
+            System.out.println("Download started!");
+            stations.getForAddress(evt.getTransmission().getPartner()).add(dl);
+            new Thread(dl).start();
+
+        } else {
+            try {
+                evt.getTransmission().close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+
+    public void onTransferFinished(TransferEvent evt) {
+        System.out.println("transfer done");
+    }
+
+    public void onTransferAborted(TransferEvent evt) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

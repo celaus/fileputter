@@ -22,6 +22,7 @@
 package at.clma.fileputter.fileputterGUI;
 
 import at.clma.fileputter.stationData.IStationInfo;
+import at.clma.fileputter.transmission.ITransfer;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -30,12 +31,14 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.ListCellRenderer;
 
 /**
@@ -72,6 +75,13 @@ public class StationList extends AbstractListModel implements IStationList, List
         return (Object) stations.get(index);
     }
 
+    public IStationInfo getForAddress(InetAddress address) {
+        for(IStationInfo info : stations) {
+            if(info.getStationAddress().equals(address))
+                return info;
+        }
+        return null;
+    }
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         StationEntry renderer = null;
         if (value instanceof IStationInfo) {
@@ -93,6 +103,15 @@ public class StationList extends AbstractListModel implements IStationList, List
         fireIntervalRemoved(this, index, index);
     }
 
+    public IStationInfo find(IStationInfo station) {
+        int index = stations.indexOf(station);
+        if (stations.indexOf(station) == -1) {
+            return null;
+        } else {
+            return stations.get(index);
+        }
+    }
+
     private class StationEntry extends JPanel {
 
         private static final int SPACER = 20;
@@ -109,10 +128,10 @@ public class StationList extends AbstractListModel implements IStationList, List
             g.drawLine(0, h, w, h);
         }
 
-        public StationEntry(IStationInfo s) {           
+        public StationEntry(IStationInfo s) {
             setLayout(new GridLayout(2, 1));
             setBackground(backgroundIdle);
-            
+
             // name
             JLabel name = new JLabel(s.getStationName());
             Font fontStyleBold = new Font(name.getFont().getName(), Font.BOLD, name.getFont().getSize());
@@ -125,6 +144,12 @@ public class StationList extends AbstractListModel implements IStationList, List
             ip.setFont(fontStyleItalic);
             add(ip);
 
+            // downloads
+            /*JPanel dls = new JPanel();
+            dls.setLayout(new GridLayout(s.getTransmissions().size(), 1));
+            for (ITransfer t : s.getTransmissions()) {
+                dls.add(new JLabel("transfer"));
+            }*/
             setPreferredSize(new Dimension(ITEM_WIDTH, name.getHeight() + ip.getHeight() + 1 + SPACER * 2));
         }
 
