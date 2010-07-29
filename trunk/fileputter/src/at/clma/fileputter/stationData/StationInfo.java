@@ -21,16 +21,18 @@
  */
 package at.clma.fileputter.stationData;
 
-import at.clma.fileputter.events.IStationEventListener;
 import at.clma.fileputter.transmission.ITransfer;
-import at.clma.fileputter.events.ITransferEventListener;
 import at.clma.fileputter.events.TransferEvent;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class StationInfo implements IStationInfo, ITransferEventListener {
+/**
+ *
+ * @author Claus Matzinger
+ */
+public class StationInfo implements IStationInfo {
 
     protected static final String NAMEPREFIX = "_name";
     protected static final String RESPONSEPREFIX = "_responseid";
@@ -40,7 +42,6 @@ public class StationInfo implements IStationInfo, ITransferEventListener {
     private int responseId;
     private InetAddress stationAddress;
     private List<ITransfer> transfers;
-    private List<IStationEventListener> listeners;
     /**
      *
      */
@@ -57,6 +58,14 @@ public class StationInfo implements IStationInfo, ITransferEventListener {
         this.stationName = stationName;
         this.responseId = respondsTo;
         this.id = id;
+        transfers = new ArrayList<ITransfer>();
+    }
+
+    public StationInfo(String stationName, int respondsTo, InetAddress address) {
+        this.stationName = stationName;
+        this.responseId = respondsTo;
+        this.stationAddress = address;
+        transfers = new ArrayList<ITransfer>();
     }
 
     @Override
@@ -100,29 +109,53 @@ public class StationInfo implements IStationInfo, ITransferEventListener {
         return this.stationAddress.equals(s.getStationAddress());
     }
 
-    public synchronized void onIncomingTransfer(TransferEvent evt) {
-       
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof StationInfo) {
+            return this.equals((StationInfo) obj);
+        } else {
+            return super.equals(obj);
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 43 * hash + this.id;
+        hash = 43 * hash + (this.stationName != null ? this.stationName.hashCode() : 0);
+        hash = 43 * hash + (this.stationAddress != null ? this.stationAddress.hashCode() : 0);
+        return hash;
+    }
+
+    public synchronized void onTransferStarted(TransferEvent evt) {
+        transfers.add(evt.getTransfer());
     }
 
     public synchronized void onTransferFinished(TransferEvent evt) {
+        if (transfers.contains(evt.getTransfer())) {
+            transfers.remove(evt.getTransfer());
+        }
     }
 
-    public synchronized void onTransferAborted(TransferEvent evt) {
+    public synchronized void add(ITransfer transfer) {
+        this.transfers.add(transfer);
     }
 
-    public boolean isAllowed(ITransfer download) {
-        return transfers.contains(download);
-    }
-
-    public void add(ITransfer transfers) {
-        this.transfers.add(transfers);
-    }
-
-    public ITransfer remove(ITransfer transfers) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public synchronized void remove(ITransfer transfer) {
+        transfers.remove(transfer);
     }
 
     public List<ITransfer> getTransmissions() {
         return transfers;
+    }
+
+    public void onTransferAborted(TransferEvent evt, String reason) {
+        if (transfers.contains(evt.getTransfer())) {
+            transfers.remove(evt.getTransfer());
+        }
+    }
+
+    public void setResponseId(int id) {
+        responseId = id;
     }
 }

@@ -21,10 +21,10 @@
  */
 package at.clma.fileputter.transmission;
 
+import at.clma.fileputter.stationData.IStationInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.nio.channels.ByteChannel;
 
 /**
@@ -45,5 +45,5 @@ public interface ITransmission {
 
     public boolean isConnectionOpen();
 
-    public InetAddress getPartner();
+    public IStationInfo getPartner();
 }

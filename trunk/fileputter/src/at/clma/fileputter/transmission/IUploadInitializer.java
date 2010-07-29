@@ -22,12 +22,13 @@
 package at.clma.fileputter.transmission;
 
 import at.clma.fileputter.stationData.IStationInfo;
+import java.io.File;
 
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
 public interface IUploadInitializer {
 
-    public ITransfer createUpload(IStationInfo to, String srcPath);
+    public ITransfer createUpload(IStationInfo to, File source);
 }

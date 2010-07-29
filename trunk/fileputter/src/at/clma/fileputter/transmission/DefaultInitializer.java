@@ -34,15 +34,17 @@ public class DefaultInitializer implements IUploadInitializer, IDownloadInitiali
     public DefaultInitializer() {
     }
 
-    public ITransfer createUpload(IStationInfo to, String srcPath) {
-        return new FileUpload(new TCPTransmission(to.getStationAddress(), ApplicationData.PORT), new File(srcPath));
+    public FileUpload createUpload(IStationInfo to, String srcPath) {
+        return new FileUpload(new TCPTransmission(to,
+                ApplicationData.TCPPORT), new File(srcPath));
     }
 
-    public ITransfer createUpload(IStationInfo to, File src) {
-        return new FileUpload(new TCPTransmission(to.getStationAddress(), ApplicationData.PORT), src);
+    public FileUpload createUpload(IStationInfo to, File src) {
+        return new FileUpload(new TCPTransmission(to,
+                ApplicationData.TCPPORT), src);
     }
 
-    public ITransfer createDownload(IStationInfo from, String destPath) {
-        return new FileDownload(new TCPTransmission(from.getStationAddress(), ApplicationData.PORT), new File(destPath));
+    public FileDownload createDownload(ITransmission transmission) {
+        return new FileDownload(transmission);
     }
 }

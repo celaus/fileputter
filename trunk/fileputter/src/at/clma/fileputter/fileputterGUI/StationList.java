@@ -22,7 +22,6 @@
 package at.clma.fileputter.fileputterGUI;
 
 import at.clma.fileputter.stationData.IStationInfo;
-import at.clma.fileputter.transmission.ITransfer;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -38,7 +37,6 @@ import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.ListCellRenderer;
 
 /**
@@ -59,8 +57,10 @@ public class StationList extends AbstractListModel implements IStationList, List
     }
 
     public void addStation(IStationInfo station) {
-        this.stations.add(station);
-        fireIntervalAdded(this, stations.indexOf(station), stations.indexOf(station));
+        if (find(station) == null) {
+            this.stations.add(station);
+            fireIntervalAdded(this, stations.indexOf(station), stations.indexOf(station));
+        }
     }
 
     public List<IStationInfo> getStations() {
@@ -76,19 +76,20 @@ public class StationList extends AbstractListModel implements IStationList, List
     }
 
     public IStationInfo getForAddress(InetAddress address) {
-        for(IStationInfo info : stations) {
-            if(info.getStationAddress().equals(address))
+        for (IStationInfo info : stations) {
+            if (info.getStationAddress().equals(address)) {
                 return info;
+            }
         }
         return null;
     }
+
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         StationEntry renderer = null;
         if (value instanceof IStationInfo) {
             renderer = new StationEntry((IStationInfo) value);
             renderer.setSelected(isSelected);
         }
-
         return renderer;
     }
 
@@ -105,11 +106,7 @@ public class StationList extends AbstractListModel implements IStationList, List
 
     public IStationInfo find(IStationInfo station) {
         int index = stations.indexOf(station);
-        if (stations.indexOf(station) == -1) {
-            return null;
-        } else {
-            return stations.get(index);
-        }
+        return index == -1 ? null : stations.get(index);
     }
 
     private class StationEntry extends JPanel {
@@ -148,7 +145,7 @@ public class StationList extends AbstractListModel implements IStationList, List
             /*JPanel dls = new JPanel();
             dls.setLayout(new GridLayout(s.getTransmissions().size(), 1));
             for (ITransfer t : s.getTransmissions()) {
-                dls.add(new JLabel("transfer"));
+            dls.add(new JLabel("transfer"));
             }*/
             setPreferredSize(new Dimension(ITEM_WIDTH, name.getHeight() + ip.getHeight() + 1 + SPACER * 2));
         }

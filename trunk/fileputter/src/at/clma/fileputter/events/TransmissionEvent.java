@@ -1,7 +1,7 @@
 /**
- * @author  Claus Matzinger
- * @date    Jul 2, 2010
- * @file    IStationEventListener
+ * @author  Claus Matzinger (S0810307022)
+ * @date    22.07.2010
+ * @file    TransmissionEvent
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -19,17 +19,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package at.clma.fileputter.events;
 
-import at.clma.fileputter.transmission.ITransfer;
+import at.clma.fileputter.transmission.ITransmission;
+import java.util.EventObject;
 
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
-public interface IStationEventListener {
+public class TransmissionEvent extends EventObject {
+    private ITransmission transmission;
 
-    public void onStationFound(StationEvent evt);
+    public TransmissionEvent(Object source, ITransmission transmission) {
+        super(source);
+        this.transmission = transmission;
+    }
 
-    public void onIncomingTransmission(StationEvent evt, ITransfer transmission);
+    public ITransmission getTransmission() {
+        return transmission;
+    }
 }

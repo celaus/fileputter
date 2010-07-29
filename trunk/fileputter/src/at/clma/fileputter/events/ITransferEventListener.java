@@ -27,9 +27,9 @@ package at.clma.fileputter.events;
  */
 public interface ITransferEventListener {
 
-    public void onIncomingTransfer(TransferEvent evt);
+    public void onTransferStarted(TransferEvent evt);
 
     public void onTransferFinished(TransferEvent evt);
 
-    public void onTransferAborted(TransferEvent evt);
+    public void onTransferAborted(TransferEvent evt, String reason);
 }

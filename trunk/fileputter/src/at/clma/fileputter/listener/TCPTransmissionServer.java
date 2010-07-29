@@ -21,8 +21,12 @@
  */
 package at.clma.fileputter.listener;
 
-import at.clma.fileputter.events.TransferEvent;
-import at.clma.fileputter.events.ITransferEventListener;
+import at.clma.fileputter.events.ITransmissionEventListener;
+import at.clma.fileputter.events.TransmissionEvent;
+import at.clma.fileputter.fileputterGUI.IStationList;
+import at.clma.fileputter.fileputterGUI.StationBox;
+import at.clma.fileputter.stationData.IStationInfo;
+import at.clma.fileputter.transmission.ITransmission;
 import at.clma.fileputter.transmission.TCPTransmission;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -31,51 +35,55 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author claus
  */
-public class TCPTransmissionServer implements INetworkListener {
+public class TCPTransmissionServer implements Runnable {
 
     private ServerSocketChannel server;
-    private Socket socket;
     private int port;
-    private List<ITransferEventListener> listeners;
+    private List<ITransmissionEventListener> listeners;
     private boolean stop = false;
+    private IStationList stations;
 
-    public TCPTransmissionServer(int port) throws IOException {
+    public TCPTransmissionServer(IStationList stations, int port) throws IOException {
         this.port = port;
-        listeners = new ArrayList<ITransferEventListener>();
+        listeners = new ArrayList<ITransmissionEventListener>();
+        this.stations = stations;
     }
 
     public void run() {
         try {
             server = ServerSocketChannel.open();
             server.socket().bind(new InetSocketAddress(port));
-        } catch (IOException ex) {
-            System.err.println("error while binding: " + ex.getMessage());
-            ex.printStackTrace();
-            return;
-        }
-        while (!stop) {
-            try {
-                SocketChannel clientChannel = server.accept();
-                Socket client = clientChannel.socket();
-                notifyListenersIncoming(client);
-            } catch (IOException ex) {
-                System.err.println("error while accepting " + ex.getMessage());
-                ex.printStackTrace();
+            while (!stop) {
+                try {
+                    SocketChannel clientChannel = server.accept();
+                    Socket client = clientChannel.socket();
+                    IStationInfo station = stations.getForAddress(client.getInetAddress());
+                    if (station != null) {
+                        notifyListenersIncoming(station, client);
+                    }
+                } catch (IOException ex) {
+                    System.err.println("error while accepting " + ex.getMessage());
+                    ex.printStackTrace();
+                }
             }
-
+        } catch (IOException ex) {
+            StationBox.error("TCP-Server Error", ex.getMessage());
+            System.exit(1);
         }
-
     }
 
-    private void notifyListenersIncoming(Socket socket) {
-        TransferEvent e = new TransferEvent(this, new TCPTransmission(socket));
-        for (ITransferEventListener s : listeners) {
-            s.onIncomingTransfer(e);
+    private void notifyListenersIncoming(IStationInfo station, Socket socket) {
+        ITransmission trans = new TCPTransmission(station, socket);
+        TransmissionEvent e = new TransmissionEvent(this, trans);
+        for (ITransmissionEventListener s : listeners) {
+            s.onNewTransmission(e);
         }
     }
 
@@ -83,11 +91,11 @@ public class TCPTransmissionServer implements INetworkListener {
         stop = true;
     }
 
-    public synchronized void addTransmissionListener(ITransferEventListener listener) {
+    public synchronized void addTransferEventListener(ITransmissionEventListener listener) {
         listeners.add(listener);
     }
 
-    public synchronized void removeTransmissionListener(ITransferEventListener listener) {
+    public synchronized void removeTransferEventListener(ITransmissionEventListener listener) {
         listeners.remove(listener);
     }
 }

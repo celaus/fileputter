@@ -21,6 +21,7 @@
  */
 package at.clma.fileputter.transmission;
 
+import at.clma.fileputter.stationData.IStationInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,20 +33,38 @@ import java.nio.channels.SocketChannel;
 
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
 public class TCPTransmission implements ITransmission {
 
+    private IStationInfo station;
     private InetAddress recipient;
     private int port;
     private Socket sock;
     private SocketChannel sockChannel;
 
+    public TCPTransmission(IStationInfo station, Socket socket) {
+        this.station = station;
+        this.port = socket.getPort();
+        this.sock = socket;
+        this.sockChannel = socket.getChannel();
+        this.recipient = station.getStationAddress();
+    }
+
+    public TCPTransmission(IStationInfo station, int port) {
+        this.station = station;
+        this.port = port;
+        this.recipient = station.getStationAddress();
+    }
+
+    @Deprecated
     public TCPTransmission(InetAddress recipient, int port) {
         this.recipient = recipient;
         this.port = port;
+
     }
 
+    @Deprecated
     public TCPTransmission(Socket socket) {
         this.recipient = socket.getInetAddress();
         this.port = socket.getPort();
@@ -71,8 +90,8 @@ public class TCPTransmission implements ITransmission {
         return sock != null;
     }
 
-    public InetAddress getPartner() {
-        return recipient;
+    public IStationInfo getPartner() {
+        return station;
     }
 
     public ByteChannel getChannel() {

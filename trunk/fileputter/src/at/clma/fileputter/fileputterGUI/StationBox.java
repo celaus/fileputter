@@ -1,7 +1,7 @@
 /**
  * @author  Claus Matzinger
  * @date    Jun 15, 2010
- * @file    MainWindow
+ * @file    StationBox
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -22,16 +22,22 @@
 package at.clma.fileputter.fileputterGUI;
 
 import at.clma.fileputter.attributes.ApplicationData;
+import at.clma.fileputter.broadcastAnnouncer.AnnouncementBroadcast;
+import at.clma.fileputter.broadcastAnnouncer.AnnouncementResponse;
+import at.clma.fileputter.events.INeighborhoodListener;
+import at.clma.fileputter.events.NeighborhoodEvent;
 import at.clma.fileputter.events.TransferEvent;
-import at.clma.fileputter.transmission.ITransfer;
-import at.clma.fileputter.listener.INetworkListener;
+import at.clma.fileputter.events.TransmissionEvent;
 import at.clma.fileputter.listener.TCPTransmissionServer;
-import at.clma.fileputter.events.IStationEventListener;
 import at.clma.fileputter.events.ITransferEventListener;
-import at.clma.fileputter.events.StationEvent;
+import at.clma.fileputter.events.ITransmissionEventListener;
+import at.clma.fileputter.listener.BroadcastListenServer;
 import at.clma.fileputter.stationData.IStationInfo;
+import at.clma.fileputter.stationData.StationInfo;
 import at.clma.fileputter.transmission.DefaultInitializer;
 import at.clma.fileputter.transmission.FileDownload;
+import at.clma.fileputter.transmission.FileUpload;
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -39,7 +45,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
-import java.lang.Thread;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -54,7 +64,7 @@ import javax.swing.JScrollPane;
  *
  * @author Claus Matzinger
  */
-public class MainWindow extends JFrame implements IStationEventListener, ITransferEventListener {
+public class StationBox extends JFrame implements INeighborhoodListener, ITransferEventListener, ITransmissionEventListener {
 
     private static final int WINDOW_WIDTH = 200;
     private static final int WINDOW_HEIGHT = 400;
@@ -62,10 +72,13 @@ public class MainWindow extends JFrame implements IStationEventListener, ITransf
     // Data
     private IStationList stations;
     private JList stationList;
+    private ITransferEventListener listener = this;
     // Services
-    private INetworkListener tcpServer;
+    private TCPTransmissionServer tcpServer;
+    private BroadcastListenServer broadcastListenServer;
+    private SystemTrayIcon icon;
 
-    public MainWindow() {
+    public StationBox() {
         setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -91,9 +104,10 @@ public class MainWindow extends JFrame implements IStationEventListener, ITransf
                 if (stationList.getSelectedValue() != null) {
                     JFileChooser fc = new JFileChooser();
                     if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                        ITransfer ul = new DefaultInitializer().createUpload(
+                        FileUpload ul = new DefaultInitializer().createUpload(
                                 (IStationInfo) stationList.getSelectedValue(),
                                 fc.getSelectedFile());
+                        ul.addTransferEventListener(listener);
                         System.out.println("Starting upload");
                         new Thread(ul).start();
                     }
@@ -141,6 +155,18 @@ public class MainWindow extends JFrame implements IStationEventListener, ITransf
             }
         });
 
+        JMenuItem auto = new JMenuItem("Autofind Stations");
+        add.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    broadcastListenServer.setLastAnnouncedID(announce());
+                } catch (IOException ex) {
+                    error("Error", ex.getMessage());
+                }
+            }
+        });
+
         JMenuItem preferences = new JMenuItem("Preferences");
         preferences.addActionListener(new ActionListener() {
 
@@ -166,6 +192,7 @@ public class MainWindow extends JFrame implements IStationEventListener, ITransf
         });
 
         fileputter.add(add);
+        fileputter.add(auto);
         fileputter.addSeparator();
         fileputter.add(preferences);
         fileputter.addSeparator();
@@ -177,61 +204,122 @@ public class MainWindow extends JFrame implements IStationEventListener, ITransf
         return mainMenu;
     }
 
-    public static void main(String[] args) {
-        for(int i = 0; i < args.length; i++){
-            if(args[i].equals("-v")) {
+    public static void main(String[] args) throws UnknownHostException, SocketException {
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].equals("-v")) {
                 ApplicationData.setVerbose(true);
             }
         }
-        new MainWindow().setVisible(true);
+        new StationBox().setVisible(true);
+    }
+
+    private IStationInfo getLocalhost() {
+        IStationInfo s = null;
+        try {
+            s = new StationInfo(getStationName(), ApplicationData.NO_RESPONSE_ID, InetAddress.getLocalHost());
+            System.out.println("localhost: " + InetAddress.getLocalHost());
+        } catch (UnknownHostException ex) {
+            error("General Exception", ex.getMessage());
+            System.exit(1);
+        }
+        return s;
     }
 
     public static void error(String tag, String msg) {
+        JOptionPane.showMessageDialog((JFrame) null, msg, tag, JOptionPane.ERROR_MESSAGE);
         System.err.println(tag + " Error:" + msg);
     }
 
     private void startServices() {
         try {
-            tcpServer = new TCPTransmissionServer(ApplicationData.PORT);
-            tcpServer.addTransmissionListener(this);
+            try {
+                icon = new SystemTrayIcon(this);
+            } catch (AWTException ex) {
+                error("Error", ex.getMessage());
+            }
+            tcpServer = new TCPTransmissionServer(stations, ApplicationData.TCPPORT);
+            tcpServer.addTransferEventListener(this);
+
+            broadcastListenServer = new BroadcastListenServer(ApplicationData.MULTICASTPORT);
+            broadcastListenServer.addNeighborhoodListener(this);
+
+            if (isAutoAnnounce()) {
+                broadcastListenServer.setLastAnnouncedID(announce());
+            }
+
+            new Thread(broadcastListenServer).start();
             new Thread(tcpServer).start();
-        } catch (IOException ex) {
-            System.err.println("IO Exception");
+        } catch (Exception ex) {
+            error("Error", ex.getMessage());
+            System.exit(1);
         }
     }
 
-    public void onStationFound(StationEvent evt) {
-        // nothing yet
+    private int announce() throws UnknownHostException, IOException {
+        return new AnnouncementBroadcast(getLocalhost(), InetAddress.getByName(ApplicationData.MULTICASTGROUP)).send();
     }
 
-    public void onIncomingTransmission(StationEvent evt, ITransfer transfer) {
+    private String getStationName() {
+        Preferences prefs = Preferences.userNodeForPackage(ApplicationData.class);
+        return prefs.get(ApplicationData.OPT_STATIONNAME, "Unnamed");
     }
 
-    public void onIncomingTransfer(TransferEvent evt) {
-        if (JOptionPane.showConfirmDialog(this, "Allow incoming transmission?",
+    private boolean isAutoAnnounce() {
+        Preferences prefs = Preferences.userNodeForPackage(ApplicationData.class);
+        return prefs.getBoolean(ApplicationData.OPT_AUTOANNOUNCE, true);
+    }
+
+    private boolean isAutoReply() {
+        Preferences prefs = Preferences.userNodeForPackage(ApplicationData.class);
+        return prefs.getBoolean(ApplicationData.OPT_AUTOREPLY, false);
+    }
+
+    public void onTransferStarted(TransferEvent evt) {
+    }
+
+    public void onTransferFinished(TransferEvent evt) {
+        JOptionPane.showMessageDialog(this, "Transfer of " + evt.getTransfer().getPath() + " finished", "Finished", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void onTransferAborted(TransferEvent evt, String reason) {
+        error(evt.getTransfer().getPath() + " failed. Reason: " + reason, "Transfer failed!");
+    }
+
+    public void onNewTransmission(TransmissionEvent evt) {
+        if (JOptionPane.showConfirmDialog(this, "Allow incoming transmission from "
+                + evt.getTransmission().getPartner().getStationAddress().getHostAddress() + "?",
                 "Allow?", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+
             JFileChooser filechooser = new JFileChooser();
             filechooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            filechooser.showSaveDialog(this);
 
-            FileDownload dl = new FileDownload(evt.getTransmission(), filechooser.getSelectedFile());
-            System.out.println("Download started!");
-            stations.getForAddress(evt.getTransmission().getPartner()).add(dl);
-            new Thread(dl).start();
-
-        } else {
-            try {
-                evt.getTransmission().close();
-            } catch (IOException ex) {
+            if (filechooser.showSaveDialog(this) != JFileChooser.ABORT) {
+                FileDownload dl = new DefaultInitializer().createDownload(evt.getTransmission());
+                dl.addTransferEventListener(evt.getTransmission().getPartner());
+                dl.addTransferEventListener(this);
+                dl.setFile(filechooser.getSelectedFile());
+                dl.getStation().add(dl);
+                new Thread(dl).start();
             }
         }
     }
 
-    public void onTransferFinished(TransferEvent evt) {
-        System.out.println("transfer done");
+    public void onNewNeighborFound(NeighborhoodEvent evt) {
+        if (getLocalhost().equals(evt.getStation()) || stations.find(evt.getStation()) != null) {
+            return;
+        }
+        if (isAutoReply() || JOptionPane.showConfirmDialog(this, "New Station " + evt.getStation().getStationName() + " (" + evt.getStation().getStationAddress().getHostAddress() + ") found! Add?",
+                "Add?", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            try {
+                stations.addStation(evt.getStation());
+                new AnnouncementResponse(getLocalhost(), evt.getStation()).send();
+            } catch (IOException ex) {
+                error("Error", ex.getLocalizedMessage());
+            }
+        }
     }
 
-    public void onTransferAborted(TransferEvent evt) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void onBroadcastResponse(NeighborhoodEvent evt) {
+        stations.addStation(evt.getStation());
     }
 }

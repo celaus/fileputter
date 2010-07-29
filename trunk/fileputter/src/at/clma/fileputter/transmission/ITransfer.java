@@ -21,11 +21,12 @@
  */
 package at.clma.fileputter.transmission;
 
+import at.clma.fileputter.events.ITransferEventListener;
 import at.clma.fileputter.stationData.IStationInfo;
 
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
 public interface ITransfer extends Runnable {
 
@@ -40,4 +41,8 @@ public interface ITransfer extends Runnable {
     public String getPath();
 
     public void stop();
+
+    public void addTransferEventListener(ITransferEventListener listener);
+
+    public void removeTransferEventListener(ITransferEventListener listener);
 }

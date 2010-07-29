@@ -1,7 +1,7 @@
 /**
  * @author  Claus Matzinger
- * @date    Jun 15, 2010
- * @file    INetworkListener
+ * @date    Jun 5, 2010
+ * @file    AnnouncementMessage
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -19,17 +19,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package at.clma.fileputter.listener;
+package at.clma.fileputter.broadcastAnnouncer;
 
-import at.clma.fileputter.events.ITransferEventListener;
+import at.clma.fileputter.stationData.IStationInfo;
+import java.io.IOException;
 
-/**
- *
- * @author Claus Matzinger
- */
-public interface INetworkListener extends Runnable {
+public class AnnouncementResponse extends AbstractAnnouncement {
+  
+    public AnnouncementResponse(IStationInfo localhost, IStationInfo to) throws IOException {
+        this.interfAddress = to.getStationAddress();
+        stInfo = localhost;
+        stInfo.setResponseId(to.getId());
+    }
 
-    public void addTransmissionListener(ITransferEventListener listener);
-
-    public void removeTransmissionListener(ITransferEventListener listener);
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

@@ -1,7 +1,7 @@
 /**
- * @author  Claus Matzinger
- * @date    Jun 15, 2010
- * @file    IAnnouncement
+ * @author  Claus Matzinger (S0810307022)
+ * @date    22.07.2010
+ * @file    INeighborhoodListener
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -19,19 +19,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package at.clma.fileputter.announcement;
 
-import java.io.IOException;
+package at.clma.fileputter.events;
 
 /**
  *
  * @author Claus Matzinger
  */
-public interface IAnnouncement {
-//broadcast = ip | ( ~ subnet )
-    public int send() throws IOException;
+public interface INeighborhoodListener {
 
-    public void setAnnouncedID(int announcedID);
+    public void onNewNeighborFound(NeighborhoodEvent evt);
 
-    public int getAnnouncedID();
+    public void onBroadcastResponse(NeighborhoodEvent evt);
 }
