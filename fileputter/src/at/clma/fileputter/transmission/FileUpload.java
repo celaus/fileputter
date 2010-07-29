@@ -30,11 +30,10 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -43,7 +42,7 @@ import java.util.List;
  */
 public class FileUpload implements ITransfer {
 
-    private static final int CHUNKSIZE = 1024;
+    private static final int CHUNKSIZE = 1024000;
     private ITransmission transmission;
     private IStationInfo station;
     private long status;
@@ -95,58 +94,55 @@ public class FileUpload implements ITransfer {
             DataOutputStream out = new DataOutputStream(transmission.getOutputStream());
             DataInputStream in = new DataInputStream(transmission.getInputStream());
 
-            printV("sending filename");
-            out.writeUTF(file.getName());
-            printV("sending filesize");
-            out.writeLong(file.length());
-            out.flush();
-
-            printV("reading file " + file.getAbsolutePath() + ": " + file.length());
-            fileChannel = new FileInputStream(file).getChannel();
-
-            status = 0;
-
-            printV("Sending file");
-
-            //Date time = new Date();
-            SocketChannel socketChannel = (SocketChannel) transmission.getChannel();
             printV("waiting for CTS");
             if (in.readUTF().equals(ApplicationData.CO_CTS)) {
+
+                printV("sending filename");
+                out.writeUTF(file.getName());
+
+                printV("sending filesize");
+                out.writeLong(file.length());
+                out.flush();
+
+                printV("reading file " + file.getAbsolutePath() + ": " + file.length());
+                fileChannel = new FileInputStream(file).getChannel();
+
+                status = 0;
+
+                printV("Sending file");
+
+                Date start = new Date();
+                SocketChannel socketChannel = (SocketChannel) transmission.getChannel();
+
                 long chunk;
                 while (!stop && status < file.length()) {
                     chunk = Math.min(CHUNKSIZE, file.length() - status);
-                    fileChannel.transferTo(status, chunk, transmission.getChannel());
+                    fileChannel.transferTo(status, chunk, socketChannel);
                     status += chunk;
                 }
 
-
-                /*while (!stop && bytesread != -1) {
-                os.write(bytesread);
-                status++;
-                if (status > 50000) {
-                speed = status / ((new Date().getTime() - time.getTime()) / 60);
-                }
-                //System.out.println("current speed = " + speed + "bytes/s");
-                bytesread = is.read();
-                } */
-
-                System.out.println("upload done: " + status + " bytes sent");
                 fileChannel.close();
                 if (!stop) {
+                    long elapsed = (new Date().getTime() - start.getTime()) / 1000;
+                    if (elapsed == 0) {
+                        elapsed = 1;
+                    }
+                    long bytesPerSecond = status / elapsed;
+                    printV("upload done: " + status + " bytes sent. speed was " + bytesPerSecond / 1024.0 + " kb/s");
                     notifyListenersFinished(this);
                 } else {
-                    notifyListenersAborted(this);
+                    notifyListenersAborted(this, "Client aborted!");
                 }
             } else {
-                System.out.println("aborted");
-                notifyListenersAborted(this);
+                notifyListenersAborted(this, "Clear to send not received.");
             }
 
         } catch (IOException ex) {
-            notifyListenersAborted(this);
+            notifyListenersAborted(this, ex.getMessage());
             System.err.println("error: " + ex.getMessage());
             ex.printStackTrace();
         } finally {
+            
             try {
                 transmission.close();
             } catch (IOException ex) {
@@ -160,7 +156,7 @@ public class FileUpload implements ITransfer {
     }
 
     private void notifyListenersFinished(FileUpload ul) {
-        TransferEvent e = new TransferEvent(this, transmission);
+        TransferEvent e = new TransferEvent(this, ul);
 
 
         for (ITransferEventListener s : listeners) {
@@ -168,16 +164,24 @@ public class FileUpload implements ITransfer {
         }
     }
 
-    private void notifyListenersAborted(FileUpload ul) {
-        TransferEvent e = new TransferEvent(this, transmission);
+    private void notifyListenersAborted(FileUpload ul, String reason) {
+        TransferEvent e = new TransferEvent(this, ul);
 
 
         for (ITransferEventListener s : listeners) {
-            s.onTransferAborted(e);
+            s.onTransferAborted(e, reason);
         }
     }
 
     public String getPath() {
         return file.getAbsolutePath();
+    }
+
+    public synchronized void addTransferEventListener(ITransferEventListener listener) {
+        listeners.add(listener);
+    }
+
+    public synchronized void removeTransferEventListener(ITransferEventListener listener) {
+        listeners.remove(listener);
     }
 }

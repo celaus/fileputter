@@ -21,6 +21,7 @@
  */
 package at.clma.fileputter.stationData;
 
+import at.clma.fileputter.events.ITransferEventListener;
 import at.clma.fileputter.transmission.ITransfer;
 import java.net.InetAddress;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.List;
  *
  * @author Claus Matzinger
  */
-public interface IStationInfo {
+public interface IStationInfo extends ITransferEventListener {
 
     public void setStationAddress(InetAddress stationAddress);
 
@@ -39,9 +40,15 @@ public interface IStationInfo {
 
     public String getNetworkString();
 
-    public void add(ITransfer transfers);
+    public void add(ITransfer transfer);
 
-    public ITransfer remove(ITransfer transfers);
+    public void remove(ITransfer transfer);
 
     public List<ITransfer> getTransmissions();
+
+    public int getId();
+
+    public int getResponseId();
+
+    public void setResponseId(int id);
 }

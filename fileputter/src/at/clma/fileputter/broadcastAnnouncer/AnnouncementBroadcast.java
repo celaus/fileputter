@@ -1,7 +1,7 @@
 /**
- * @author  Claus Matzinger
- * @date    Jul 2, 2010
- * @file    StationEvent
+ * @author  Claus Matzinger (S0810307022)
+ * @date    25.07.2010
+ * @file    AnnouncementBroadcast
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -19,25 +19,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package at.clma.fileputter.events;
+package at.clma.fileputter.broadcastAnnouncer;
 
+import at.clma.fileputter.attributes.ApplicationData;
 import at.clma.fileputter.stationData.IStationInfo;
-import java.util.EventObject;
+import java.io.IOException;
+import java.net.InetAddress;
 
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
-public class StationEvent extends EventObject {
+public class AnnouncementBroadcast extends AbstractAnnouncement {
 
-    private IStationInfo station;
-
-    public StationEvent(Object source, IStationInfo station) {
-        super(source);
-        this.station = station;
-    }
-
-    public IStationInfo getStation() {
-        return station;
+    public AnnouncementBroadcast(IStationInfo localhost, InetAddress to) throws IOException {
+        this.interfAddress = to;
+        stInfo = localhost;
+        stInfo.setResponseId(ApplicationData.NO_RESPONSE_ID);
     }
 }

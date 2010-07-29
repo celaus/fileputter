@@ -21,57 +21,67 @@
  */
 package at.clma.fileputter.listener;
 
-import at.clma.fileputter.fileputterGUI.MainWindow;
+import at.clma.fileputter.attributes.ApplicationData;
+import at.clma.fileputter.events.INeighborhoodListener;
+import at.clma.fileputter.events.NeighborhoodEvent;
+import at.clma.fileputter.fileputterGUI.StationBox;
 import at.clma.fileputter.stationData.IStationInfo;
-import at.clma.fileputter.stationData.StationInfo;
 import at.clma.fileputter.stationData.StationInfoFactory;
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BroadcastListenServer implements Runnable {
 
     private int port;
-    private DatagramSocket socket;
-    private boolean interrupt = false;
+    private MulticastSocket socket;
+    private boolean stop = false;
     private IStationInfo result;
+    private List<INeighborhoodListener> listeners;
+    private int lastAnnouncedID = ApplicationData.NO_RESPONSE_ID;
 
-    public BroadcastListenServer(int port, Runnable backPoster)
-            throws SocketException {
+    public BroadcastListenServer(int port)
+            throws SocketException, IOException {
         this.port = port;
-        createSocket(port);
+        createSocket();
+        this.listeners = new ArrayList<INeighborhoodListener>();
     }
 
-    private void createSocket(int port) throws SocketException {
-        socket = new DatagramSocket(port);
+    private void createSocket() throws SocketException, IOException {
+        socket = new MulticastSocket(port);
+        socket.joinGroup(InetAddress.getByName(ApplicationData.MULTICASTGROUP));
         socket.setReuseAddress(true);
     }
 
     @Override
     public void run() {
         String tmp = null;
-        while (!interrupt) {
+        while (!stop) {
             byte[] buf = new byte[1024];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
                 socket.receive(packet);
                 tmp = new String(buf);
-                result = StationInfoFactory.newInstanceFromString(tmp);
+                result = new StationInfoFactory().newInstanceFromString(tmp);
                 result.setStationAddress(packet.getAddress());
+                if (result.getResponseId() == lastAnnouncedID) {
+                    notifyListenersBroadcastResponse(result);
+                } else if (result.getResponseId() == ApplicationData.NO_RESPONSE_ID) {
+                    notifyListenersNewStation(result);
+                }
+
             } catch (IOException e) {
-                MainWindow.error("Mover.NET", e.getMessage());
+                StationBox.error("Mover.NET", e.getMessage());
             } catch (ParseException e) {
-                MainWindow.error("Mover.NET", e.getMessage()
+                StationBox.error("Mover.NET", e.getMessage()
                         + " at token " + e.getErrorOffset());
             }
         }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
         socket.close();
     }
 
@@ -82,21 +92,43 @@ public class BroadcastListenServer implements Runnable {
         return result;
     }
 
-    /**
-     * @param results
-     *            the results to set
-     */
-    public void setResult(StationInfo result) {
-        this.result = result;
+    public void stop() {
+        stop = true;
     }
 
-    public void interrupt() {
-        interrupt = true;
-        socket.close();
+    public void resume() throws SocketException, IOException {
+        stop();
+        stop = false;
+        createSocket();
     }
 
-    public void resume() throws SocketException {
-        interrupt = false;
-        createSocket(port);
+    private void notifyListenersNewStation(IStationInfo station) {
+        NeighborhoodEvent neighborhoodEvent = new NeighborhoodEvent(this, station);
+        for (INeighborhoodListener s : listeners) {
+            s.onNewNeighborFound(neighborhoodEvent);
+        }
+    }
+
+    public void addNeighborhoodListener(INeighborhoodListener listener) {
+        listeners.add(listener);
+    }
+
+    public void removeNeighborhoodListener(INeighborhoodListener listener) {
+        listeners.remove(listener);
+    }
+
+    public int getLastAnnouncedID() {
+        return lastAnnouncedID;
+    }
+
+    public void setLastAnnouncedID(int lastAnnouncedID) {
+        this.lastAnnouncedID = lastAnnouncedID;
+    }
+
+    private void notifyListenersBroadcastResponse(IStationInfo result) {
+        NeighborhoodEvent neighborhoodEvent = new NeighborhoodEvent(this, result);
+        for (INeighborhoodListener s : listeners) {
+            s.onBroadcastResponse(neighborhoodEvent);
+        }
     }
 }

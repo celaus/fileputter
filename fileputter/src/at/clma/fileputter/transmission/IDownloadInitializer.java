@@ -21,13 +21,11 @@
  */
 package at.clma.fileputter.transmission;
 
-import at.clma.fileputter.stationData.IStationInfo;
-
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
 public interface IDownloadInitializer {
 
-    public ITransfer createDownload(IStationInfo from, String destPath);
+    public ITransfer createDownload(ITransmission transmission);
 }

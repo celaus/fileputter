@@ -30,7 +30,7 @@ import java.util.StringTokenizer;
  */
 public class StationInfoFactory {
 
-    public static IStationInfo newInstanceFromString(String s) throws ParseException {
+    public IStationInfo newInstanceFromString(String s) throws ParseException {
         StringTokenizer stok = new StringTokenizer(s, "=;");
 
         String tmpStr = null;

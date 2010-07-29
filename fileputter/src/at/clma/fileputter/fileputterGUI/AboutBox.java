@@ -25,14 +25,11 @@ package at.clma.fileputter.fileputterGUI;
 import at.clma.fileputter.attributes.ApplicationData;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.io.IOException;
 import javax.swing.JFrame;
 
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
 public class AboutBox extends javax.swing.JDialog {
 

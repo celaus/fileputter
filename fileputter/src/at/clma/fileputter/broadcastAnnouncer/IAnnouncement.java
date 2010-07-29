@@ -19,15 +19,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-
 package at.clma.fileputter.broadcastAnnouncer;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
 
 /**
  *
  * @author Claus Matzinger
  */
 public interface IAnnouncement {
-   // public int send() throws IOException;
 
+    public int send() throws IOException;
 }

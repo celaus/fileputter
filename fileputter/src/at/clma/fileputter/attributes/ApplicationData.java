@@ -29,6 +29,9 @@ package at.clma.fileputter.attributes;
  */
 public class ApplicationData {
 
+    // ----------
+    // GENERAL
+    // ----------
     /**
      * The applications' name.
      */
@@ -77,10 +80,21 @@ public class ApplicationData {
             + "GNU General Public License for more details. "
             + "You should have received a copy of the GNU General Public License "
             + "along with this program.  If not, see <http://www.gnu.org/licenses/>. ";
+    // ----------
+    // NETWORK
+    // ----------
     /**
-     * The port, fileputter listens on.
+     * The port fileputter listens on incoming TCP Transmissions.
      */
-    public static final int PORT = 9999;
+    public static final int TCPPORT = 9999;
+    /**
+     * The multicast group for announcements.
+     */
+    public static final String MULTICASTGROUP = "224.1.1.1";
+    /**
+     * The multicastport for announcements.
+     */
+    public static final int MULTICASTPORT = 9998;
     // ----------
     // PREFERENCES Nodenames
     // ----------
@@ -96,6 +110,13 @@ public class ApplicationData {
      * Name of the station-node for saving.
      */
     public static final String OPT_STATIONNAME = "stationName";
+    // ----------
+    // CONSTANTS
+    // ----------
+    /**
+     * ID if the station was not an automatically discovered station.
+     */
+    public static final int NO_RESPONSE_ID = -1;
     /**
      * Clear to send code.
      */
@@ -104,6 +125,9 @@ public class ApplicationData {
      * End of transmission code.
      */
     public static final String CO_EOT = "eot";
+    // ----------
+    // APPLICATION States
+    // ----------
     /**
      * Verbosity state of the application
      */

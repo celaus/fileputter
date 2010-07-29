@@ -1,7 +1,7 @@
 /**
- * @author  Claus Matzinger
- * @date    Jun 01, 2010
- * @file    Handler
+ * @author  Claus Matzinger (S0810307022)
+ * @date    22.07.2010
+ * @file    NeighborhoodEvent
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -20,20 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+package at.clma.fileputter.events;
 
-package at.clma.fileputter.broadcastListener;
+import at.clma.fileputter.stationData.IStationInfo;
+import java.util.EventObject;
 
 /**
  *
- * 
+ * @author Claus Matzinger
  */
-class Handler {
-
-    public Handler() {
+public class NeighborhoodEvent extends EventObject {
+private IStationInfo station;
+ 
+    public NeighborhoodEvent(Object source, IStationInfo station) {
+        super(source);
+        this.station = station;
     }
-    
-    void post(Runnable backPoster) {
-        new Thread(backPoster);
-    }
 
+    public IStationInfo getStation() {
+        return station;
+    }
 }

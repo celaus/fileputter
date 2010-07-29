@@ -21,7 +21,7 @@
  */
 package at.clma.fileputter.events;
 
-import at.clma.fileputter.transmission.ITransmission;
+import at.clma.fileputter.transmission.ITransfer;
 import java.util.EventObject;
 
 /**
@@ -30,14 +30,14 @@ import java.util.EventObject;
  */
 public class TransferEvent extends EventObject {
 
-    private ITransmission transmission;
+    private ITransfer transfer;
 
-    public TransferEvent(Object source, ITransmission transmission) {
+    public TransferEvent(Object source, ITransfer transfer) {
         super(source);
-        this.transmission = transmission;
+        this.transfer = transfer;
     }
 
-    public ITransmission getTransmission() {
-        return transmission;
+    public ITransfer getTransfer() {
+        return transfer;
     }
 }

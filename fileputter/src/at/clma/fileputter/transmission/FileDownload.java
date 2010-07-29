@@ -25,7 +25,6 @@ import at.clma.fileputter.attributes.ApplicationData;
 import at.clma.fileputter.events.ITransferEventListener;
 import at.clma.fileputter.events.TransferEvent;
 import at.clma.fileputter.stationData.IStationInfo;
-import at.clma.fileputter.stationData.StationInfo;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -39,17 +38,18 @@ import java.util.List;
 
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
 public class FileDownload implements ITransfer {
 
-    private static final int CHUNKSIZE = 102400;
+    private static final int CHUNKSIZE = 1024000;
     private ITransmission transmission;
     private long status;
     private List<ITransferEventListener> listeners;
     private File file;
     private long speed;
     private boolean stop;
+    private long filesize;
 
     public FileDownload(ITransmission transmission, File file) {
         this.transmission = transmission;
@@ -64,6 +64,15 @@ public class FileDownload implements ITransfer {
         }
     }
 
+    public FileDownload(ITransmission transmission) {
+        this.transmission = transmission;
+        listeners = new ArrayList<ITransferEventListener>();
+        status = 0;
+        speed = 0;
+        filesize = 0;
+        stop = false;
+    }
+
     private void printV(String s) {
         if (ApplicationData.isVerbose()) {
             System.out.println(s);
@@ -73,9 +82,14 @@ public class FileDownload implements ITransfer {
     public void run() {
         try {
             printV("opening connection");
+            notifyListenersStarted(this);
             transmission.open();
             DataInputStream in = new DataInputStream(transmission.getInputStream());
             DataOutputStream out = new DataOutputStream(transmission.getOutputStream());
+
+            printV("sending CTS");
+            out.writeUTF(ApplicationData.CO_CTS);
+            out.flush();
 
             printV("getting filename");
             String filename = in.readUTF();
@@ -83,11 +97,7 @@ public class FileDownload implements ITransfer {
             file = new File(file.getAbsolutePath() + "/" + filename);
 
             printV("getting filesize");
-            long filesize = in.readLong();
-
-            printV("sending CTS");
-            out.writeUTF(ApplicationData.CO_CTS);
-            out.flush();
+            filesize = in.readLong();
 
             printV("filesize " + filesize);
 
@@ -96,8 +106,10 @@ public class FileDownload implements ITransfer {
                 file.delete();
             }
             file.createNewFile();
+
             SocketChannel sock = (SocketChannel) transmission.getChannel();
             FileChannel fileChannel = new FileOutputStream(file).getChannel();
+
             if (sock == null) {
                 System.err.println("error sock is null");
             }
@@ -105,7 +117,7 @@ public class FileDownload implements ITransfer {
 
             status = 0;
             long chunk;
-            Date time = new Date();
+            Date start = new Date();
             while (!stop && status < filesize) {
                 chunk = Math.min(CHUNKSIZE, filesize - status);
                 fileChannel.transferFrom(sock, status, chunk);
@@ -114,18 +126,24 @@ public class FileDownload implements ITransfer {
                 speed = status / ((new Date().getTime() - time.getTime()) / 60);
                 }*/ //System.out.println("current speed = " + speed + "bytes/s");
             }
-            printV("download done got " + status + " bytes ");
             fileChannel.close();
             if (!stop) {
+                long elapsed = (new Date().getTime() - start.getTime()) / 1000;
+                if (elapsed == 0) {
+                    elapsed = 1;
+                }
+                long bytesPerSecond = status / elapsed;
+                printV("download done got " + status + " bytes, speed was " + bytesPerSecond / 1024.0 + " kb/s");
+
                 notifyListenersFinished(this);
             } else {
-                notifyListenersAborted(this);
+                notifyListenersAborted(this, "Transfer aborted!");
             }
 
         } catch (IOException ex) {
-            notifyListenersAborted(this);
-            System.err.println("error: " + ex.getMessage());
-            ex.printStackTrace();
+            notifyListenersAborted(this, ex.getMessage());
+            //System.err.println("error: " + ex.getMessage());
+            //ex.printStackTrace();
         } finally {
             try {
                 transmission.close();
@@ -136,37 +154,43 @@ public class FileDownload implements ITransfer {
     }
 
     public IStationInfo getStation() {
-        return new StationInfo("hello", 1);
+        return transmission.getPartner();
     }
 
-    public synchronized void addTransmissionListener(ITransferEventListener listener) {
+    public synchronized void addTransferEventListener(ITransferEventListener listener) {
         listeners.add(listener);
     }
 
-    public synchronized void removeTransmissionListener(ITransferEventListener listener) {
+    public synchronized void removeTransferEventListener(ITransferEventListener listener) {
         listeners.remove(listener);
     }
 
-    private void notifyListenersFinished(FileDownload dl) {
-        TransferEvent e = new TransferEvent(this, transmission);
+    private void notifyListenersStarted(FileDownload dl) {
+        TransferEvent e = new TransferEvent(this, dl);
 
+        for (ITransferEventListener s : listeners) {
+            s.onTransferStarted(e);
+        }
+    }
+
+    private void notifyListenersFinished(FileDownload dl) {
+        TransferEvent e = new TransferEvent(this, dl);
 
         for (ITransferEventListener s : listeners) {
             s.onTransferFinished(e);
         }
     }
 
-    private void notifyListenersAborted(FileDownload dl) {
-        TransferEvent e = new TransferEvent(this, transmission);
-
+    private void notifyListenersAborted(FileDownload dl, String reason) {
+        TransferEvent e = new TransferEvent(this, dl);
 
         for (ITransferEventListener s : listeners) {
-            s.onTransferAborted(e);
+            s.onTransferAborted(e, reason);
         }
     }
 
     public long getSize() {
-        return 0L;
+        return filesize;
     }
 
     public long getStatus() {
@@ -183,6 +207,14 @@ public class FileDownload implements ITransfer {
 
     public File getFile() {
         return file;
+    }
+
+    public void setFile(File file) {
+        if (file.isDirectory()) {
+            this.file = file;
+        } else {
+            this.file = file.getParentFile();
+        }
     }
 
     public synchronized void stop() {

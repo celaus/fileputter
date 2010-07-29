@@ -1,7 +1,7 @@
 /**
- * @author  Claus Matzinger
- * @date    Jul 1, 2010
- * @file    RemoteAnnouncement
+ * @author  Claus Matzinger (S0810307022)
+ * @date    22.07.2010
+ * @file    ITransmissionEventListener
  *
  * Simple filesharing over LAN.
  * Copyright (C) 2010  Claus Matzinger
@@ -19,25 +19,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package at.clma.fileputter.announcement;
 
-import java.io.IOException;
+package at.clma.fileputter.events;
 
 /**
  *
- * @author claus
+ * @author Claus Matzinger
  */
-public class RemoteAnnouncement implements IAnnouncement {
-
-    public int send() throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public void setAnnouncedID(int announcedID) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    public int getAnnouncedID() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+public interface ITransmissionEventListener {
+    public void onNewTransmission(TransmissionEvent evt);
+    
 }
