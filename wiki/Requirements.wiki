@@ -1,0 +1,36 @@
+#summary The functional and non-functional requirements
+#labels Phase-Requirements
+
+= Introduction =
+
+As many projects fileputter is was also created as an answer to a problem. This problem was that every time I wanted to "just share something" e.g. a document, I was not able to do this in a quick and easy way. While in Windows a shared folder is required ... and sometimes also a considerable amout of configuration. 
+
+When trying to use instant messengers (like [http://www.pidgin.im Pidgin]) - file transfers hardly ever work (especially cross-platform ...). 
+
+Being a developer my solution was to write a Java program that enables me to do that - without any configuration. I put togehter some requirements:
+
+= Requirements =
+== Functional Requirements ==
+=== The program must be able to: ===
+ # send a file (binary or text) over a network based on IPv4 adresses
+ # receive a file (binary or text) from a network based on IPv4 adresses 
+ # detect and add fellow computers automatically within the local network to a list
+ # block adding or being added by other computers
+ # add other computers by their DNS name or IPv4 adress from user input
+ # feature a Graphical User Interface showing the list with the computers name and ip adress
+ # let every user choose an individual name
+
+=== The program should be able to: ===
+ # maintain the list automatically (add or remove computers based on their availability)
+ # send folders containing files and subfolders over a network based on IPv4 adresses
+ # remain fully functional without a Graphical User Interface
+ # support sending a file via dragging and dropping files and folders on the GUI
+ # perform a integrity check after transfer
+
+== Non-Functional Requirements ==
+=== The program must: ===
+ # enable the user to send the files and folders with three clicks (when the path is given)
+ # be developed as an open source project
+ # be able to perform with zero configuration
+
+This list is yet to be completed!
