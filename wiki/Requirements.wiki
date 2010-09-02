@@ -10,6 +10,8 @@ When trying to use instant messengers (like [http://www.pidgin.im Pidgin]) - fil
 Being a developer my solution was to write a Java program that enables me to do that - without any configuration. I put togehter some requirements:
 
 = Requirements =
+
+
 == Functional Requirements ==
 === The program must be able to: ===
  # send a file (binary or text) over a network based on IPv4 adresses
@@ -27,7 +29,11 @@ Being a developer my solution was to write a Java program that enables me to do 
  # support sending a file via dragging and dropping files and folders on the GUI
  # perform a integrity check after transfer
 
+
+
+
 == Non-Functional Requirements ==
+
 === The program must: ===
  # enable the user to send the files and folders with three clicks (when the path is given)
  # be developed as an open source project
